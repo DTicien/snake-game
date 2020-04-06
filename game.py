@@ -3,13 +3,13 @@ import random
 from math import floor
 
 import pygame
-from pygame.locals import *
+from pygame.locals import K_SPACE, K_RIGHT, K_LEFT, K_UP, K_DOWN, K_ESCAPE, QUIT
 
 
 class Snake:
     x = []  # x positions of the snake's items
     y = []  # y positions of the snake's items
-    direction = ''
+    direction = ""
     length = 4  # Initial length of the snake
     n_added = 3  # Number of items to add to the snake when it lengthens
 
@@ -19,7 +19,7 @@ class Snake:
         self.x_max = x_max
         self.y_max = y_max
         self._image_surf = pygame.image.load("images/snake_mini.png").convert()
-        self.direction = 'left'
+        self.direction = "left"
         for i in range(self.length):
             self.x.append(int(x_max / 2) - (self.length - 1 - i) * self.step)
             self.y.append(int(y_max / 2))
@@ -35,13 +35,13 @@ class Snake:
             self.y[i] = self.y[i - 1]
 
         # Update head
-        if self.direction == 'right':
+        if self.direction == "right":
             self.x[0] += self.step
-        if self.direction == 'left':
+        if self.direction == "left":
             self.x[0] -= self.step
-        if self.direction == 'up':
+        if self.direction == "up":
             self.y[0] -= self.step
-        if self.direction == 'down':
+        if self.direction == "down":
             self.y[0] += self.step
 
     def lengthen(self):
@@ -56,16 +56,16 @@ class Snake:
             self.y.append(self.y[-1])
 
     def move_right(self):
-        self.direction = 'right'
+        self.direction = "right"
 
     def move_left(self):
-        self.direction = 'left'
+        self.direction = "left"
 
     def move_up(self):
-        self.direction = 'up'
+        self.direction = "up"
 
     def move_down(self):
-        self.direction = 'down'
+        self.direction = "down"
 
     def has_eaten(self, raspi_x, raspi_y):
         """
@@ -97,12 +97,20 @@ class Snake:
         flag_lost: True if player has lost
         """
         # Find out if snake's head has touched the border
-        flag_lost_border = (self.x[0] > self.x_max - 1) or (self.x[0] < 0) or (self.y[0] > self.y_max - 1) or (
-                self.y[0] < 0)
+        flag_lost_border = (
+            (self.x[0] > self.x_max - 1)
+            or (self.x[0] < 0)
+            or (self.y[0] > self.y_max - 1)
+            or (self.y[0] < 0)
+        )
 
         # Find out if snake's has cut itself through
         flag_lost_self_intersect = (self.x[0], self.y[0]) in list(
-            zip([self.x[i] for i in range(1, self.length)], [self.y[i] for i in range(1, self.length)]))
+            zip(
+                [self.x[i] for i in range(1, self.length)],
+                [self.y[i] for i in range(1, self.length)],
+            )
+        )
 
         flag_lost = flag_lost_border or flag_lost_self_intersect
         return flag_lost
@@ -144,15 +152,18 @@ class App:
     points = 0
 
     def __init__(self):
-
         pygame.init()
-        pygame.display.set_caption('My snake game!')
-        self._display_surf = pygame.display.set_mode((self.windowWidth, self.windowHeight), pygame.HWSURFACE)
+        pygame.display.set_caption("My snake game!")
+        self._display_surf = pygame.display.set_mode(
+            (self.windowWidth, self.windowHeight), pygame.HWSURFACE
+        )
         self._running = True
-        self.snake = Snake(length=4,
-                           step=self.snake_step,
-                           x_max=self.windowWidth,
-                           y_max=self.windowHeight)
+        self.snake = Snake(
+            length=4,
+            step=self.snake_step,
+            x_max=self.windowWidth,
+            y_max=self.windowHeight,
+        )
         self.raspi = RasPi(x=0, y=0)
         self.raspi.spawn_at_random(self.windowHeight, self.windowWidth, self.snake_step)
         self.snake.render(self._display_surf)
@@ -163,6 +174,9 @@ class App:
             self._running = False
 
     def on_loop(self):
+        """
+        Method executed for each clock tick
+        """
         self.snake.update()
         self.flag_lost = self.snake.has_lost()
         flag_snake_over_raspi = True
@@ -170,7 +184,9 @@ class App:
             self.points += 5
             self.snake.lengthen()
             while flag_snake_over_raspi:
-                self.raspi.spawn_at_random(self.windowHeight, self.windowWidth, self.snake_step)
+                self.raspi.spawn_at_random(
+                    self.windowHeight, self.windowWidth, self.snake_step
+                )
                 flag_snake_over_raspi = self.snake.is_over(self.raspi.x, self.raspi.y)
         self._running = not self.flag_lost
         pass
@@ -179,7 +195,9 @@ class App:
         self._display_surf.fill((0, 0, 0))
         self.snake.render(self._display_surf)
         self.raspi.render(self._display_surf)
-        self.display_message(f'Points: {self.points}', (self.windowWidth - 50, 20), fontsize=16)
+        self.display_message(
+            f"Points: {self.points}", (self.windowWidth - 50, 20), fontsize=16
+        )
         pygame.display.flip()
 
     @staticmethod
@@ -214,13 +232,15 @@ class App:
             self.on_render()
             self.clock.tick(16)
         if self.flag_lost:
-            self.display_message(f'You lost, you big big loser! - final score: {self.points}',
-                                 (self.windowWidth // 2, self.windowHeight // 2))
+            self.display_message(
+                f"You lost, you big big loser! - final score: {self.points}",
+                (self.windowWidth // 2, self.windowHeight // 2),
+            )
             time.sleep(5)
         App.on_cleanup()
 
     def display_message(self, message_string, position, fontsize=32):
-        font = pygame.font.Font('freesansbold.ttf', fontsize)
+        font = pygame.font.Font("freesansbold.ttf", fontsize)
         text = font.render(message_string, True, (255, 255, 255), (0, 0, 0))
         text_rect = text.get_rect()
         text_rect.center = position
