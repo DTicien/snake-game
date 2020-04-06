@@ -25,6 +25,9 @@ class Snake:
             self.y.append(int(y_max / 2))
 
     def update(self):
+        """
+        Method to update the snake position
+        """
 
         # Update tail
         for i in range(self.length - 1, 0, -1):
@@ -41,9 +44,12 @@ class Snake:
         if self.direction == 'down':
             self.y[0] += self.step
 
-        return self.has_lost()
-
     def lengthen(self):
+        """
+        Method to lengthen the snake when it has eaten a raspi
+        Its extended with self.n_added new items
+        :return:
+        """
         self.length += self.n_added
         for i in range(self.n_added):
             self.x.append(self.x[-1])
@@ -62,18 +68,39 @@ class Snake:
         self.direction = 'down'
 
     def has_eaten(self, raspi_x, raspi_y):
+        """
+        Method to check whether the snake has eaten the raspi or not
+        :param raspi_x: x coordinate of the raspi
+        :param rapsi_y: y coordinate of the raspi
+        :return:
+        flag_eaten: True if the snake has eaten the raspi
+        """
         flag_eaten = self.x[0] == raspi_x and self.y[0] == raspi_y
         return flag_eaten
 
-    # Method to know if the snake is over a raspi
     def is_over(self, raspi_x, rapsi_y):
+        """
+        # Method to know if the snake is over a raspi
+        :param raspi_x: x coordinate of the raspi
+        :param rapsi_y: y coordinate of the raspi
+        :return:
+        True if the snake if over the raspi
+        """
         return (raspi_x, rapsi_y) in list(zip(self.x, self.y))
 
     def has_lost(self):
-        # Lost if snake's head has touched the border
+        """
+        Method to know if the player has lost
+        - Either the snake touched the frame border
+        - Or it cut itself
+        :return:
+        flag_lost: True if player has lost
+        """
+        # Find out if snake's head has touched the border
         flag_lost_border = (self.x[0] > self.x_max - 1) or (self.x[0] < 0) or (self.y[0] > self.y_max - 1) or (
                 self.y[0] < 0)
 
+        # Find out if snake's has cut itself through
         flag_lost_self_intersect = (self.x[0], self.y[0]) in list(
             zip([self.x[i] for i in range(1, self.length)], [self.y[i] for i in range(1, self.length)]))
 
@@ -93,6 +120,16 @@ class RasPi:
         self.x = x
         self.y = y
         self._image_surf = pygame.image.load("images/raspi.png").convert()
+
+    def spawn_at_random(self, window_height, window_width, snake_step):
+        """
+        Update the position of the raspi randomly within the game frame
+        :param window_height: height of the window frame
+        :param window_width: width of the window frame
+        :param snake_step: Step used by the snake to move
+        """
+        self.x = floor(random.randint(0, window_width) / snake_step) * snake_step
+        self.y = floor(random.randint(0, window_height) / snake_step) * snake_step
 
     def render(self, display_surf):
         display_surf.blit(self._image_surf, (self.x, self.y))
@@ -115,8 +152,8 @@ class App:
                            step=self.snake_step,
                            x_max=self.windowWidth,
                            y_max=self.windowHeight)
-        self.raspi = RasPi(x=96,
-                           y=96)
+        self.raspi = RasPi(x=0, y=0)
+        self.raspi.spawn_at_random(self.windowHeight, self.windowWidth, self.snake_step)
         self.snake.render(self._display_surf)
         self.clock = pygame.time.Clock()
 
@@ -125,13 +162,13 @@ class App:
             self._running = False
 
     def on_loop(self):
-        self.lost = self.snake.update()
+        self.snake.update()
+        self.lost = self.snake.has_lost()
         flag_snake_over_raspi = True
         if self.snake.has_eaten(self.raspi.x, self.raspi.y):
             self.snake.lengthen()
             while flag_snake_over_raspi:
-                self.raspi.x = floor(random.randint(0, self.windowHeight) / self.snake_step) * self.snake_step
-                self.raspi.y = floor(random.randint(0, self.windowHeight) / self.snake_step) * self.snake_step
+                self.raspi.spawn_at_random(self.windowHeight, self.windowWidth, self.snake_step)
                 flag_snake_over_raspi = self.snake.is_over(self.raspi.x, self.raspi.y)
         self._running = not self.lost
         pass
@@ -174,13 +211,13 @@ class App:
             self.on_render()
             self.clock.tick(16)
         if self.lost:
-            self.display_loser_message()
+            self.display_message('You lost, you big big loser!')
             time.sleep(5)
         App.on_cleanup()
 
-    def display_loser_message(self):
+    def display_message(self, message_string):
         font = pygame.font.Font('freesansbold.ttf', 32)
-        text = font.render('You lost, you big big loser!', True, (255, 255, 255), (0, 0, 0))
+        text = font.render(message_string, True, (255, 255, 255), (0, 0, 0))
         text_rect = text.get_rect()
         text_rect.center = (self.windowWidth // 2, self.windowHeight // 2)
         self._display_surf.blit(text, text_rect)
