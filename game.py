@@ -1,4 +1,3 @@
-import time
 import random
 from math import floor
 
@@ -20,6 +19,8 @@ class Snake:
         self.y_max = y_max
         self._image_surf = pygame.image.load("images/snake_mini.png").convert()
         self.direction = "left"
+        self.x = []
+        self.y = []
         for i in range(self.length):
             self.x.append(int(x_max / 2) - (self.length - 1 - i) * self.step)
             self.y.append(int(y_max / 2))
@@ -157,7 +158,9 @@ class App:
         self._display_surf = pygame.display.set_mode(
             (self.windowWidth, self.windowHeight), pygame.HWSURFACE
         )
+        self.points = 0
         self._running = True
+        self.flag_lost = False
         self.snake = Snake(
             length=4,
             step=self.snake_step,
@@ -222,21 +225,27 @@ class App:
             if keys[K_DOWN]:
                 self.snake.move_down()
 
-            if keys[K_SPACE]:
-                self.snake.lengthen()
-
             if keys[K_ESCAPE]:
                 self._running = False
 
             self.on_loop()
             self.on_render()
             self.clock.tick(16)
-        if self.flag_lost:
-            self.display_message(
-                f"You lost, you big big loser! - final score: {self.points}",
-                (self.windowWidth // 2, self.windowHeight // 2),
-            )
-            time.sleep(5)
+
+            if self.flag_lost:
+                self.display_message(
+                    f"You lost, you big big loser! - final score: {self.points}",
+                    (self.windowWidth // 2, self.windowHeight // 2),
+                )
+                self.display_message(
+                    f"Replay: press space, Quit: press escape",
+                    (self.windowWidth // 2, self.windowHeight // 2 + 50),
+                    fontsize=16,
+                )
+                accepted_replay = "undef"
+                while accepted_replay == "undef":
+                    accepted_replay = self.propose_replay()
+
         App.on_cleanup()
 
     def display_message(self, message_string, position, fontsize=32):
@@ -246,6 +255,18 @@ class App:
         text_rect.center = position
         self._display_surf.blit(text, text_rect)
         pygame.display.flip()
+
+    def propose_replay(self):
+        pygame.event.pump()
+        keys = pygame.key.get_pressed()
+        if keys[K_SPACE]:
+            self.__init__()
+            return "yes"
+        elif keys[K_ESCAPE]:
+            self._running = False
+            return "no"
+        else:
+            return "undef"
 
 
 if __name__ == "__main__":
