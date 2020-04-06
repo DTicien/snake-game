@@ -6,21 +6,17 @@ from pygame.locals import K_SPACE, K_RIGHT, K_LEFT, K_UP, K_DOWN, K_ESCAPE, QUIT
 
 
 class Snake:
-    x = []  # x positions of the snake's items
-    y = []  # y positions of the snake's items
-    direction = ""
-    length = 4  # Initial length of the snake
     n_added = 3  # Number of items to add to the snake when it lengthens
 
     def __init__(self, length, x_max, y_max, step):
         self.step = step
-        self.length = length
+        self.length = length  # Initial length of the snake
         self.x_max = x_max
         self.y_max = y_max
         self._image_surf = pygame.image.load("images/snake_mini.png").convert()
         self.direction = "left"
-        self.x = []
-        self.y = []
+        self.x = []  # x positions of the snake's items
+        self.y = []  # y positions of the snake's items
         for i in range(self.length):
             self.x.append(int(x_max / 2) - (self.length - 1 - i) * self.step)
             self.y.append(int(y_max / 2))
@@ -122,9 +118,6 @@ class Snake:
 
 
 class RasPi:
-    x = 0
-    y = 0
-
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -147,10 +140,7 @@ class RasPi:
 class App:
     windowWidth = 800
     windowHeight = 608
-    snake = 0
     snake_step = 16
-    flag_lost = False
-    points = 0
 
     def __init__(self):
         pygame.init()
@@ -175,6 +165,8 @@ class App:
     def on_event(self, event):
         if event.type == QUIT:
             self._running = False
+            App.on_cleanup()
+            exit()
 
     def on_loop(self):
         """
@@ -210,6 +202,9 @@ class App:
     def on_execute(self):
 
         while self._running:
+            for event in pygame.event.get():
+                self.on_event(event)
+
             pygame.event.pump()
             keys = pygame.key.get_pressed()
 
