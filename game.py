@@ -140,7 +140,8 @@ class App:
     windowHeight = 608
     snake = 0
     snake_step = 16
-    lost = False
+    flag_lost = False
+    points = 0
 
     def __init__(self):
 
@@ -163,20 +164,22 @@ class App:
 
     def on_loop(self):
         self.snake.update()
-        self.lost = self.snake.has_lost()
+        self.flag_lost = self.snake.has_lost()
         flag_snake_over_raspi = True
         if self.snake.has_eaten(self.raspi.x, self.raspi.y):
+            self.points += 5
             self.snake.lengthen()
             while flag_snake_over_raspi:
                 self.raspi.spawn_at_random(self.windowHeight, self.windowWidth, self.snake_step)
                 flag_snake_over_raspi = self.snake.is_over(self.raspi.x, self.raspi.y)
-        self._running = not self.lost
+        self._running = not self.flag_lost
         pass
 
     def on_render(self):
         self._display_surf.fill((0, 0, 0))
         self.snake.render(self._display_surf)
         self.raspi.render(self._display_surf)
+        self.display_message(f'Points: {self.points}', (self.windowWidth - 50, 20), fontsize=16)
         pygame.display.flip()
 
     @staticmethod
@@ -210,16 +213,17 @@ class App:
             self.on_loop()
             self.on_render()
             self.clock.tick(16)
-        if self.lost:
-            self.display_message('You lost, you big big loser!')
+        if self.flag_lost:
+            self.display_message(f'You lost, you big big loser! - final score: {self.points}',
+                                 (self.windowWidth // 2, self.windowHeight // 2))
             time.sleep(5)
         App.on_cleanup()
 
-    def display_message(self, message_string):
-        font = pygame.font.Font('freesansbold.ttf', 32)
+    def display_message(self, message_string, position, fontsize=32):
+        font = pygame.font.Font('freesansbold.ttf', fontsize)
         text = font.render(message_string, True, (255, 255, 255), (0, 0, 0))
         text_rect = text.get_rect()
-        text_rect.center = (self.windowWidth // 2, self.windowHeight // 2)
+        text_rect.center = position
         self._display_surf.blit(text, text_rect)
         pygame.display.flip()
 
