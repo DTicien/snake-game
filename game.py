@@ -208,16 +208,16 @@ class App:
             pygame.event.pump()
             keys = pygame.key.get_pressed()
 
-            if keys[K_RIGHT]:
+            if keys[K_RIGHT] and self.snake.direction != "left":
                 self.snake.move_right()
 
-            if keys[K_LEFT]:
+            if keys[K_LEFT] and self.snake.direction != "right":
                 self.snake.move_left()
 
-            if keys[K_UP]:
+            if keys[K_UP] and self.snake.direction != "down":
                 self.snake.move_up()
 
-            if keys[K_DOWN]:
+            if keys[K_DOWN] and self.snake.direction != "up":
                 self.snake.move_down()
 
             if keys[K_ESCAPE]:
