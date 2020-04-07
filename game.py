@@ -3,31 +3,41 @@ from pygame.locals import K_SPACE, K_RIGHT, K_LEFT, K_UP, K_DOWN, K_ESCAPE, QUIT
 
 from objects.raspi import RasPi
 from objects.snake import Snake
+from brain.agent import Agent
 
 
 class Game:
-    windowWidth = 800
-    windowHeight = 608
-    snake_step = 16
+    MODE = "AGENT"
+    WINDOW_WIDTH = 800
+    WINDOW_HEIGHT = 608
+    SNAKE_STEP = 16
+    EATING_REWARD = 5
+    NUM_GAMES_AGENT = 100
 
     def __init__(self):
         pygame.init()
         pygame.display.set_caption("My snake game!")
         self._display_surf = pygame.display.set_mode(
-            (self.windowWidth, self.windowHeight), pygame.HWSURFACE
+            (self.WINDOW_WIDTH, self.WINDOW_HEIGHT), pygame.HWSURFACE
         )
-        self.points = 0
+        self.score = 0
         self._running = True
         self.flag_lost = False
         self.snake = Snake(
             length=4,
-            step=self.snake_step,
-            x_max=self.windowWidth,
-            y_max=self.windowHeight,
+            step=self.SNAKE_STEP,
+            x_max=self.WINDOW_WIDTH,
+            y_max=self.WINDOW_HEIGHT,
         )
         self.raspi = RasPi(x=0, y=0)
-        self.raspi.spawn_at_random(self.windowHeight, self.windowWidth, self.snake_step)
-        self.snake.render(self._display_surf)
+        self.raspi.spawn_at_random(
+            self.WINDOW_HEIGHT, self.WINDOW_WIDTH, self.SNAKE_STEP
+        )
+        if self.MODE == "AGENT":
+            self.agent = Agent()
+            self.num_games = self.NUM_GAMES_AGENT
+        else:
+            self.num_games = 1
         self.clock = pygame.time.Clock()
 
     def on_event(self, event):
@@ -44,22 +54,24 @@ class Game:
         self.flag_lost = self.snake.has_lost()
         flag_snake_over_raspi = True
         if self.snake.has_eaten(self.raspi.x, self.raspi.y):
-            self.points += 5
+            self.score += self.EATING_REWARD
             self.snake.lengthen()
             while flag_snake_over_raspi:
                 self.raspi.spawn_at_random(
-                    self.windowHeight, self.windowWidth, self.snake_step
+                    self.WINDOW_HEIGHT, self.WINDOW_WIDTH, self.SNAKE_STEP
                 )
                 flag_snake_over_raspi = self.snake.is_over(self.raspi.x, self.raspi.y)
         self._running = not self.flag_lost
-        pass
+
+        if self.MODE == "AGENT":
+            self.agent.store(self)
 
     def on_render(self):
         self._display_surf.fill((0, 0, 0))
         self.snake.render(self._display_surf)
         self.raspi.render(self._display_surf)
         self.display_message(
-            f"Points: {self.points}", (self.windowWidth - 50, 20), fontsize=16
+            f"Points: {self.score}", (self.WINDOW_WIDTH - 50, 20), fontsize=16
         )
         pygame.display.flip()
 
@@ -70,26 +82,11 @@ class Game:
     def on_execute(self):
 
         while self._running:
-            for event in pygame.event.get():
-                self.on_event(event)
+            if self.MODE == "MANUAL":
+                self.manual_move()
 
-            pygame.event.pump()
-            keys = pygame.key.get_pressed()
-
-            if keys[K_RIGHT] and self.snake.direction != "left":
-                self.snake.move_right()
-
-            if keys[K_LEFT] and self.snake.direction != "right":
-                self.snake.move_left()
-
-            if keys[K_UP] and self.snake.direction != "down":
-                self.snake.move_up()
-
-            if keys[K_DOWN] and self.snake.direction != "up":
-                self.snake.move_down()
-
-            if keys[K_ESCAPE]:
-                self._running = False
+            elif self.MODE == "AGENT":
+                self.agent_move()
 
             self.on_loop()
             self.on_render()
@@ -97,12 +94,12 @@ class Game:
 
             if self.flag_lost:
                 self.display_message(
-                    f"You lost, you big big loser! - final score: {self.points}",
-                    (self.windowWidth // 2, self.windowHeight // 2),
+                    f"You lost, you big big loser! - final score: {self.score}",
+                    (self.WINDOW_WIDTH // 2, self.WINDOW_HEIGHT // 2),
                 )
                 self.display_message(
                     f"Replay: press space, Quit: press escape",
-                    (self.windowWidth // 2, self.windowHeight // 2 + 50),
+                    (self.WINDOW_WIDTH // 2, self.WINDOW_HEIGHT // 2 + 50),
                     fontsize=16,
                 )
                 accepted_replay = "undef"
@@ -110,6 +107,39 @@ class Game:
                     accepted_replay = self.propose_replay()
 
         Game.on_cleanup()
+
+    def manual_move(self):
+        for event in pygame.event.get():
+            self.on_event(event)
+
+        pygame.event.pump()
+        keys = pygame.key.get_pressed()
+
+        if keys[K_RIGHT] and self.snake.direction != "left":
+            self.snake.move_right()
+
+        if keys[K_LEFT] and self.snake.direction != "right":
+            self.snake.move_left()
+
+        if keys[K_UP] and self.snake.direction != "down":
+            self.snake.move_up()
+
+        if keys[K_DOWN] and self.snake.direction != "up":
+            self.snake.move_down()
+
+        if keys[K_ESCAPE]:
+            self._running = False
+
+    def agent_move(self):
+        next_move = self.agent.next_move(self)
+        if next_move == "right" and self.snake.direction != "left":
+            self.snake.move_right()
+        if next_move == "left" and self.snake.direction != "right":
+            self.snake.move_left()
+        if next_move == "up" and self.snake.direction != "down":
+            self.snake.move_up()
+        if next_move == "down" and self.snake.direction != "up":
+            self.snake.move_down()
 
     def display_message(self, message_string, position, fontsize=32):
         font = pygame.font.Font("freesansbold.ttf", fontsize)
