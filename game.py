@@ -1,3 +1,5 @@
+from math import floor
+
 import pygame
 from pygame.locals import K_SPACE, K_RIGHT, K_LEFT, K_UP, K_DOWN, K_ESCAPE, QUIT
 
@@ -8,32 +10,33 @@ from brain.agent import Agent
 
 class Game:
     MODE = "AGENT"
-    WINDOW_WIDTH = 800
-    WINDOW_HEIGHT = 608
+    WINDOW_WIDTH = 320
+    WINDOW_HEIGHT = 320
     SNAKE_STEP = 16
-    EATING_REWARD = 5
-    NUM_GAMES_AGENT = 100
+    EATING_REWARD = 1
+    NUM_GAMES_AGENT = 50000
 
-    def __init__(self):
+    def __init__(self, ind_game=0):
         pygame.init()
         pygame.display.set_caption("My snake game!")
         self._display_surf = pygame.display.set_mode(
             (self.WINDOW_WIDTH, self.WINDOW_HEIGHT), pygame.HWSURFACE
         )
         self.score = 0
+        self.ind_game = ind_game
         self._running = True
         self.flag_lost = False
         self.snake = Snake(
-            length=4,
+            length=1,
             step=self.SNAKE_STEP,
             x_max=self.WINDOW_WIDTH,
             y_max=self.WINDOW_HEIGHT,
         )
-        self.raspi = RasPi(x=0, y=0)
-        self.raspi.spawn_at_random(
-            self.WINDOW_HEIGHT, self.WINDOW_WIDTH, self.SNAKE_STEP
+        self.raspi = RasPi(
+            x=self.SNAKE_STEP * (-1 + floor(self.WINDOW_WIDTH / 2 / self.SNAKE_STEP)),
+            y=self.SNAKE_STEP * (floor(self.WINDOW_HEIGHT / 2 / self.SNAKE_STEP)),
         )
-        if self.MODE == "AGENT":
+        if self.MODE == "AGENT" and self.ind_game == 0:
             self.agent = Agent()
             self.num_games = self.NUM_GAMES_AGENT
         else:
@@ -51,6 +54,9 @@ class Game:
         Method executed for each clock tick
         """
         self.snake.update()
+        if self.MODE == "AGENT":
+            self.agent.store(self)
+
         self.flag_lost = self.snake.has_lost()
         flag_snake_over_raspi = True
         if self.snake.has_eaten(self.raspi.x, self.raspi.y):
@@ -64,7 +70,7 @@ class Game:
         self._running = not self.flag_lost
 
         if self.MODE == "AGENT":
-            self.agent.store(self)
+            self.agent.train_network_short_term()
 
     def on_render(self):
         self._display_surf.fill((0, 0, 0))
@@ -81,30 +87,36 @@ class Game:
 
     def on_execute(self):
 
-        while self._running:
-            if self.MODE == "MANUAL":
-                self.manual_move()
+        for i_games in range(self.num_games):
+            while self._running:
+                if self.MODE == "MANUAL":
+                    self.manual_move()
 
-            elif self.MODE == "AGENT":
-                self.agent_move()
+                elif self.MODE == "AGENT":
+                    self.agent_move()
 
-            self.on_loop()
-            self.on_render()
-            self.clock.tick(16)
+                self.on_loop()
+                self.on_render()
+                self.clock.tick(60)
 
-            if self.flag_lost:
-                self.display_message(
-                    f"You lost, you big big loser! - final score: {self.score}",
-                    (self.WINDOW_WIDTH // 2, self.WINDOW_HEIGHT // 2),
-                )
-                self.display_message(
-                    f"Replay: press space, Quit: press escape",
-                    (self.WINDOW_WIDTH // 2, self.WINDOW_HEIGHT // 2 + 50),
-                    fontsize=16,
-                )
-                accepted_replay = "undef"
-                while accepted_replay == "undef":
-                    accepted_replay = self.propose_replay()
+                if self.flag_lost:
+                    if self.MODE == "MANUAL":
+                        self.display_message(
+                            f"You lost, you big big loser! - final score: {self.score}",
+                            (self.WINDOW_WIDTH // 2, self.WINDOW_HEIGHT // 2),
+                        )
+                        self.display_message(
+                            f"Replay: press space, Quit: press escape",
+                            (self.WINDOW_WIDTH // 2, self.WINDOW_HEIGHT // 2 + 50),
+                            fontsize=16,
+                        )
+                        accepted_replay = "undef"
+                        while accepted_replay == "undef":
+                            accepted_replay = self.propose_replay()
+                    elif self.MODE == "AGENT":
+                        self.agent.train_network()
+                        self.agent.summary(self)
+                        self.__init__(self.ind_game + 1)  # Reinit game
 
         Game.on_cleanup()
 

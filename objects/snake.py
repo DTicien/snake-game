@@ -2,7 +2,7 @@ import pygame
 
 
 class Snake:
-    n_added = 3  # Number of items to add to the snake when it lengthens
+    n_added = 1  # Number of items to add to the snake when it lengthens
 
     def __init__(self, length, x_max, y_max, step):
         self.step = step
@@ -104,6 +104,7 @@ class Snake:
                 [self.y[i] for i in range(1, self.length)],
             )
         )
+        flag_lost_self_intersect = False
 
         flag_lost = flag_lost_border or flag_lost_self_intersect
         return flag_lost
