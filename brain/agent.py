@@ -34,14 +34,19 @@ class Agent:
         state["raspi_down"] = game.snake.y[0] < game.raspi.y
         state["raspi_right"] = game.snake.x[0] < game.raspi.x
         state["raspi_left"] = game.snake.x[0] > game.raspi.x
-        state["wall_distance_up"] = (
-            game.snake.y[0] / (game.WINDOW_WIDTH - game.SNAKE_STEP)
+
+        wall_up = (game.snake.y[0] / (game.WINDOW_WIDTH - game.SNAKE_STEP)) == 0
+        wall_down = (1 - game.snake.y[0] / (game.WINDOW_WIDTH - game.SNAKE_STEP)) == 0
+        wall_left = (game.snake.x[0] / (game.WINDOW_WIDTH - game.SNAKE_STEP)) == 0
+        wall_right = (
+            1 - (game.snake.x[0] / (game.WINDOW_WIDTH - game.SNAKE_STEP))
         ) == 0
-        state["wall_distance_down"] = (1 - float(state["wall_distance_up"])) == 0
-        state["wall_distance_left"] = (
-            game.snake.x[0] / (game.WINDOW_WIDTH - game.SNAKE_STEP)
-        ) == 0
-        state["wall_distance_right"] = (1 - float(state["wall_distance_left"])) == 0
+
+        state["obstacle_up"] = wall_up or game.snake.is_body_up()
+        state["obstacle_down"] = wall_down or game.snake.is_body_down()
+        state["obstacle_left"] = wall_left or game.snake.is_body_left()
+        state["obstacle_right"] = wall_right or game.snake.is_body_right()
+
         state["snake_moving_up"] = game.snake.direction == "up"
         state["snake_moving_down"] = game.snake.direction == "down"
         state["snake_moving_right"] = game.snake.direction == "right"

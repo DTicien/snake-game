@@ -104,10 +104,45 @@ class Snake:
                 [self.y[i] for i in range(1, self.length)],
             )
         )
-        flag_lost_self_intersect = False
 
         flag_lost = flag_lost_border or flag_lost_self_intersect
         return flag_lost
+
+    def is_body_up(self):
+        body_is_up = any(
+            [
+                ((self.y[0] - self.y[i]) == self.step) and (self.x[0] == self.x[i])
+                for i in range(1, self.length)
+            ]
+        )
+        return body_is_up
+
+    def is_body_down(self):
+        body_is_down = any(
+            [
+                ((self.y[0] - self.y[i]) == -self.step) and (self.x[0] == self.x[i])
+                for i in range(1, self.length)
+            ]
+        )
+        return body_is_down
+
+    def is_body_left(self):
+        body_is_left = any(
+            [
+                ((self.x[0] - self.x[i]) == self.step) and (self.y[0] == self.y[i])
+                for i in range(1, self.length)
+            ]
+        )
+        return body_is_left
+
+    def is_body_right(self):
+        body_is_right = any(
+            [
+                ((self.x[0] - self.x[i]) == -self.step) and (self.y[0] == self.y[i])
+                for i in range(1, self.length)
+            ]
+        )
+        return body_is_right
 
     def render(self, display_surf):
         for x, y in zip(self.x, self.y):
