@@ -35,12 +35,10 @@ class Agent:
         state["raspi_right"] = game.snake.x[0] < game.raspi.x
         state["raspi_left"] = game.snake.x[0] > game.raspi.x
 
-        wall_up = (game.snake.y[0] / (game.WINDOW_WIDTH - game.SNAKE_STEP)) == 0
-        wall_down = (1 - game.snake.y[0] / (game.WINDOW_WIDTH - game.SNAKE_STEP)) == 0
-        wall_left = (game.snake.x[0] / (game.WINDOW_WIDTH - game.SNAKE_STEP)) == 0
-        wall_right = (
-            1 - (game.snake.x[0] / (game.WINDOW_WIDTH - game.SNAKE_STEP))
-        ) == 0
+        wall_up = (game.snake.y[0] - game.walls.y_min_inside) <= game.SNAKE_STEP
+        wall_down = (game.walls.y_max_inside - game.snake.y[0]) <= game.SNAKE_STEP
+        wall_left = (game.snake.x[0] - game.walls.x_min_inside) <= game.SNAKE_STEP
+        wall_right = (game.walls.x_max_inside - game.snake.x[0]) <= game.SNAKE_STEP
 
         state["obstacle_up"] = wall_up or game.snake.is_body_up()
         state["obstacle_down"] = wall_down or game.snake.is_body_down()
@@ -175,7 +173,6 @@ class Agent:
 
     def summary(self, game):
         print(
-            f"Iteration: {game.ind_game}\n"
-            f"Epsilon: {self.epsilon}\n"
-            f"Score: {game.score}\n"
+            f"Game N°: {game.ind_game}, epsilon: {self.epsilon:1.2f}, "
+            f"score: {game.score}, high score: {game.high_score}"
         )

@@ -16,7 +16,7 @@ class Game:
     WINDOW_HEIGHT = 480
     SNAKE_STEP = 16
     EATING_REWARD = 1
-    NUM_GAMES_AGENT = 50000
+    NUM_GAMES_AGENT = 200
 
     def __init__(self, ind_game=0):
         pygame.init()
@@ -50,10 +50,13 @@ class Game:
         if self.ind_game == 0:
             self.high_score = 0
 
-        if self.MODE == "AGENT" and self.ind_game == 0:
-            self.agent = Agent()
-            self.num_games = self.NUM_GAMES_AGENT
+        if self.MODE == "AGENT":
+            self.frame_rate = 60
+            if self.ind_game == 0:
+                self.agent = Agent()
+                self.num_games = self.NUM_GAMES_AGENT
         else:
+            self.frame_rate = 15
             self.num_games = 1
 
     def on_event(self, event):
@@ -98,6 +101,12 @@ class Game:
         self.display_message(
             f"High score: {self.high_score}", (self.WINDOW_WIDTH - 80, 20), fontsize=16
         )
+        if self.MODE == "AGENT":
+            self.display_message(
+                f"Game n°: {self.ind_game} / {self.num_games}",
+                (int(self.WINDOW_WIDTH / 2), 20),
+                fontsize=16,
+            )
         pygame.display.flip()
 
     @staticmethod
@@ -116,7 +125,7 @@ class Game:
 
                 self.on_loop()
                 self.on_render()
-                self.clock.tick(60)
+                self.clock.tick(self.frame_rate)
 
                 if self.flag_lost:
                     self.set_high_score()
@@ -124,6 +133,7 @@ class Game:
                         self.display_message(
                             f"You lost, you big big loser! - final score: {self.score}",
                             (self.WINDOW_WIDTH // 2, self.WINDOW_HEIGHT // 2),
+                            fontsize=16,
                         )
                         self.display_message(
                             f"Replay: press space, Quit: press escape",
