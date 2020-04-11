@@ -81,7 +81,7 @@ class Snake:
         """
         return (raspi_x, rapsi_y) in list(zip(self.x, self.y))
 
-    def has_lost(self):
+    def has_lost(self, walls):
         """
         Method to know if the player has lost
         - Either the snake touched the frame border
@@ -91,10 +91,10 @@ class Snake:
         """
         # Find out if snake's head has touched the border
         flag_lost_border = (
-            (self.x[0] > self.x_max - 1)
-            or (self.x[0] < 0)
-            or (self.y[0] > self.y_max - 1)
-            or (self.y[0] < 0)
+            (self.x[0] > walls.x_max_inside - 1)
+            or (self.x[0] < walls.x_min_inside)
+            or (self.y[0] > walls.y_max_inside - 1)
+            or (self.y[0] < walls.y_min_inside)
         )
 
         # Find out if snake's has cut itself through

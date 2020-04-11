@@ -61,7 +61,7 @@ class Agent:
     @staticmethod
     def compute_reward(game):
         reward = (
-            float(game.snake.has_lost()) * (-20)
+            float(game.snake.has_lost(game.walls)) * (-20)
             + float(game.snake.has_eaten(game.raspi.x, game.raspi.y)) * 10
         )
         return reward

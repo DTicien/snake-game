@@ -5,11 +5,13 @@ from pygame.locals import K_SPACE, K_RIGHT, K_LEFT, K_UP, K_DOWN, K_ESCAPE, QUIT
 
 from objects.raspi import RasPi
 from objects.snake import Snake
+from objects.wall import Wall
 from brain.agent import Agent
 
 
 class Game:
     MODE = "AGENT"
+    HEADER_HEIGHT = 48
     WINDOW_WIDTH = 480
     WINDOW_HEIGHT = 480
     SNAKE_STEP = 16
@@ -32,10 +34,19 @@ class Game:
             x_max=self.WINDOW_WIDTH,
             y_max=self.WINDOW_HEIGHT,
         )
+        self.walls = Wall(
+            self.HEADER_HEIGHT,
+            self.WINDOW_HEIGHT,
+            self.WINDOW_WIDTH,
+            thickness=self.SNAKE_STEP,
+        )
+
         self.raspi = RasPi(
             x=self.SNAKE_STEP * (-1 + floor(self.WINDOW_WIDTH / 2 / self.SNAKE_STEP)),
             y=self.SNAKE_STEP * (floor(self.WINDOW_HEIGHT / 2 / self.SNAKE_STEP)),
         )
+        self.clock = pygame.time.Clock()
+
         if self.ind_game == 0:
             self.high_score = 0
 
@@ -44,7 +55,6 @@ class Game:
             self.num_games = self.NUM_GAMES_AGENT
         else:
             self.num_games = 1
-        self.clock = pygame.time.Clock()
 
     def on_event(self, event):
         if event.type == QUIT:
@@ -60,14 +70,18 @@ class Game:
         if self.MODE == "AGENT":
             self.agent.store(self)
 
-        self.flag_lost = self.snake.has_lost()
+        self.flag_lost = self.snake.has_lost(self.walls)
         flag_snake_over_raspi = True
         if self.snake.has_eaten(self.raspi.x, self.raspi.y):
             self.score += self.EATING_REWARD
             self.snake.lengthen()
             while flag_snake_over_raspi:
                 self.raspi.spawn_at_random(
-                    self.WINDOW_HEIGHT, self.WINDOW_WIDTH, self.SNAKE_STEP
+                    x_min=self.walls.x_min_inside + self.walls.thickness,
+                    x_max=self.walls.x_max_inside,
+                    y_min=self.walls.y_min_inside,
+                    y_max=self.walls.y_max_inside,
+                    step=self.SNAKE_STEP,
                 )
                 flag_snake_over_raspi = self.snake.is_over(self.raspi.x, self.raspi.y)
         self._running = not self.flag_lost
@@ -79,6 +93,7 @@ class Game:
         self._display_surf.fill((0, 0, 0))
         self.snake.render(self._display_surf)
         self.raspi.render(self._display_surf)
+        self.walls.render(self._display_surf)
         self.display_message(f"Score: {self.score}", (50, 20), fontsize=16)
         self.display_message(
             f"High score: {self.high_score}", (self.WINDOW_WIDTH - 80, 20), fontsize=16
