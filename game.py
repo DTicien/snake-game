@@ -10,8 +10,8 @@ from brain.agent import Agent
 
 class Game:
     MODE = "AGENT"
-    WINDOW_WIDTH = 320
-    WINDOW_HEIGHT = 320
+    WINDOW_WIDTH = 480
+    WINDOW_HEIGHT = 480
     SNAKE_STEP = 16
     EATING_REWARD = 1
     NUM_GAMES_AGENT = 50000
@@ -36,6 +36,9 @@ class Game:
             x=self.SNAKE_STEP * (-1 + floor(self.WINDOW_WIDTH / 2 / self.SNAKE_STEP)),
             y=self.SNAKE_STEP * (floor(self.WINDOW_HEIGHT / 2 / self.SNAKE_STEP)),
         )
+        if self.ind_game == 0:
+            self.high_score = 0
+
         if self.MODE == "AGENT" and self.ind_game == 0:
             self.agent = Agent()
             self.num_games = self.NUM_GAMES_AGENT
@@ -76,8 +79,9 @@ class Game:
         self._display_surf.fill((0, 0, 0))
         self.snake.render(self._display_surf)
         self.raspi.render(self._display_surf)
+        self.display_message(f"Score: {self.score}", (50, 20), fontsize=16)
         self.display_message(
-            f"Points: {self.score}", (self.WINDOW_WIDTH - 50, 20), fontsize=16
+            f"High score: {self.high_score}", (self.WINDOW_WIDTH - 80, 20), fontsize=16
         )
         pygame.display.flip()
 
@@ -100,6 +104,7 @@ class Game:
                 self.clock.tick(60)
 
                 if self.flag_lost:
+                    self.set_high_score()
                     if self.MODE == "MANUAL":
                         self.display_message(
                             f"You lost, you big big loser! - final score: {self.score}",
@@ -172,6 +177,10 @@ class Game:
             return "no"
         else:
             return "undef"
+
+    def set_high_score(self):
+        if self.score > self.high_score:
+            self.high_score = self.score
 
 
 if __name__ == "__main__":

@@ -61,7 +61,7 @@ class Agent:
     @staticmethod
     def compute_reward(game):
         reward = (
-            float(game.snake.has_lost()) * (-10)
+            float(game.snake.has_lost()) * (-20)
             + float(game.snake.has_eaten(game.raspi.x, game.raspi.y)) * 10
         )
         return reward
@@ -134,7 +134,7 @@ class Agent:
                     .batch(self.BATCH_SIZE)
                 )
 
-                self.network.fit(dataset, verbose=True, epochs=1)
+                self.network.fit(dataset, verbose=False, epochs=1)
 
     def train_network_short_term(self):
         if self.num_iterations > 1:
