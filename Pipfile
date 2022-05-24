@@ -9,7 +9,7 @@ pre-commit = "*"
 [packages]
 pygame = "*"
 numpy = "*"
-tensorflow = "==2.2.0rc2"
+tensorflow = "==2.6.4"
 
 [requires]
 python_version = "3.8"
